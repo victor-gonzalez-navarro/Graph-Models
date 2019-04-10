@@ -6,19 +6,23 @@ import matplotlib.pyplot as plt
 import collections
 from random import randint
 
+
 # ------------------------------------------------------------------------------------------------------------ FUNCTIONS
-def plot_degree_distr(d):
+def plot_degree_distr(d,title):
     degreeCount = collections.Counter(d)
     deg, cnt = zip(*degreeCount.items())
     plt.bar(deg, cnt, width=0.80, color='b')
+    plt.title(title)
+    plt.xlabel('Degree')
+    plt.ylabel('Count')
     plt.show()
 
-type = 3 # Type of graph I want to create
+type = 1 # Type of graph I want to create
 
 # --------------------------------------------------------------------------------------- Erdös-Rényi random graph model
 if type == 1:
-    N = 100
-    p = 0.7  # high value indicates more edges
+    N = 500
+    p = 0.5  # high value indicates more edges
     G = nx.Graph()
     scala = np.linspace(0, N - 1, N)
     G.add_nodes_from(scala)
@@ -27,13 +31,31 @@ if type == 1:
             if random.uniform(0, 1) > (1 - p):
                 G.add_edge(i, j)
 
-    # Experimental results
-    num_edges = G.number_of_edges()
-    print('The number of edges is: ' + str(num_edges))
-    # Theoretical results
-    print('The expected number of edges is: ' + str(p * N * (N - 1) / 2))
-    error = ((abs(num_edges - (p * N * (N - 1) / 2))) * 100) / (p * N * (N - 1) / 2)
-    print('The relative error over 100 is: ' + str(error))
+    # Plot degree distribution
+    di = list(G.degree)
+    degree = [dix[1] for dix in di]
+    plot_degree_distr(degree,'Degree distribution Erdös-Rényi graph (N='+str(N)+',p='+str(p)+')')
+
+    # Ground truth
+    G2 = nx.erdos_renyi_graph(N, p, seed=None, directed=False)
+
+    # Plot degree distribution
+    di = list(G2.degree)
+    degree = [dix[1] for dix in di]
+    plot_degree_distr(degree, 'Degree distribution Erdös-Rényi graph with NetworkX (N=' + str(N) + ',p=' + str(p) + ')')
+
+    # # Plot the graph
+    # nx.draw(G, with_labels=False)
+    # plt.draw()
+    # plt.show()
+
+    # # Experimental results
+    # num_edges = G.number_of_edges()
+    # print('The number of edges is: ' + str(num_edges))
+    # # Theoretical results
+    # print('The expected number of edges is: ' + str(p * N * (N - 1) / 2))
+    # error = ((abs(num_edges - (p * N * (N - 1) / 2))) * 100) / (p * N * (N - 1) / 2)
+    # print('The relative error over 100 is: ' + str(error))
 
 
 # ----------------------------------------------------------------------------------- Watts-Strogatz “small-world” model
@@ -127,7 +149,7 @@ elif type == 4:
         degree = np.round((ag + (bg - ag) * r) ** (1. / g))
 
     # Plot degree distribution
-    plot_degree_distr(degree)
+    plot_degree_distr(degree,'Degree distribution')
 
     # Compute acumulative degree
     degreeacum = [0]
@@ -151,8 +173,3 @@ elif type == 4:
                     degreeacum = degreeacum + [degreeacum[itx] + degree[itx], ]
                 sumatotal_degree = degreeacum[-1]
             tries = tries + 1
-
-    # Plot the graph
-    nx.draw(G, with_labels=True)
-    plt.draw()
-    plt.show()
