@@ -5,23 +5,28 @@ import math
 import matplotlib.pyplot as plt
 import collections
 from random import randint
+from scipy.special import comb
 
 
 # ------------------------------------------------------------------------------------------------------------ FUNCTIONS
 def plot_degree_distr(d,title):
     degreeCount = collections.Counter(d)
     deg, cnt = zip(*degreeCount.items())
-    plt.bar(deg, cnt, width=0.80, color='b')
+    cnt = cnt/np.sum(cnt)
+    plt.bar(deg, cnt, width=0.60, color='b')
     plt.title(title)
+    extra = max(cnt)+max(cnt)*0.05
+    plt.ylim((0, extra))
     plt.xlabel('Degree')
-    plt.ylabel('Count')
-    plt.show()
+    plt.ylabel('Propbability')
+    return extra
+    #plt.show()
 
 type = 1 # Type of graph I want to create
 
 # --------------------------------------------------------------------------------------- Erdös-Rényi random graph model
 if type == 1:
-    N = 500
+    N = 1000
     p = 0.5  # high value indicates more edges
     G = nx.Graph()
     scala = np.linspace(0, N - 1, N)
@@ -34,20 +39,34 @@ if type == 1:
     # Plot degree distribution
     di = list(G.degree)
     degree = [dix[1] for dix in di]
-    plot_degree_distr(degree,'Degree distribution Erdös-Rényi graph (N='+str(N)+',p='+str(p)+')')
+    plt.subplot(121)
+    extra = plot_degree_distr(degree,'Experimental Degree distribution')
 
     # Ground truth
-    G2 = nx.erdos_renyi_graph(N, p, seed=None, directed=False)
-
-    # Plot degree distribution
-    di = list(G2.degree)
-    degree = [dix[1] for dix in di]
-    plot_degree_distr(degree, 'Degree distribution Erdös-Rényi graph with NetworkX (N=' + str(N) + ',p=' + str(p) + ')')
+    int_min = min(degree)
+    int_max = max(degree)
+    axix = np.linspace(int_min, int_max, int(int_max - int_min + 1))
+    axiy = [comb(N - 1, item) * (p ** item) * ((1 - p) ** (N - 1 - item)) for item in axix]
+    plt.subplot(122)
+    plt.bar(axix, axiy, width=0.80, color='g')
+    plt.title('Ground Truth Degree distribution')
+    plt.xlabel('Degree')
+    plt.ylabel('Probability')
+    plt.ylim((0,extra))
+    plt.suptitle('Erdös-Rényi random graph model (N='+str(N)+',p='+str(p)+')',fontsize=16)
+    plt.show()
 
     # # Plot the graph
     # nx.draw(G, with_labels=False)
     # plt.draw()
     # plt.show()
+
+    # Plot degree distribution networkX
+    # G2 = nx.erdos_renyi_graph(N, p, seed=None, directed=False)
+    # di = list(G2.degree)
+    # degree = [dix[1] for dix in di]
+    # plt.subplot(132)
+    # plot_degree_distr(degree, 'Degree distribution NetworkX (N=' + str(N) + ',p=' + str(p) + ')')
 
     # # Experimental results
     # num_edges = G.number_of_edges()
