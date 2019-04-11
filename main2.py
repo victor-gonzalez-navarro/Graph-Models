@@ -1,29 +1,13 @@
 import networkx as nx
-import numpy as np
 import random
-import math
-import matplotlib.pyplot as plt
-import collections
+
 from random import randint
 from scipy.special import comb
+from auxiliary_functions import *
 
 
-# ------------------------------------------------------------------------------------------------------------ FUNCTIONS
-def plot_degree_distr(d,title):
-    degreeCount = collections.Counter(d)
-    deg, cnt = zip(*degreeCount.items())
-    cnt = cnt/np.sum(cnt)
-    plt.bar(deg, cnt, width=0.60, color='b')
-    plt.title(title)
-    extra = max(cnt)+max(cnt)*0.05
-    plt.ylim((0, extra))
-    plt.xlabel('Degree')
-    plt.ylabel('Propbability')
-    return extra
-    #plt.show()
-
-
-type = 2 # Type of graph I want to create
+# ------------------------------------------------------------------------------------------------------------ MAIN CODE
+type = 4  # Type of graph I want to create
 
 # --------------------------------------------------------------------------------------- Erdös-Rényi random graph model
 if type == 1:
@@ -61,21 +45,6 @@ if type == 1:
     # nx.draw(G, with_labels=False)
     # plt.draw()
     # plt.show()
-
-    # Plot degree distribution networkX
-    # G2 = nx.erdos_renyi_graph(N, p, seed=None, directed=False)
-    # di = list(G2.degree)
-    # degree = [dix[1] for dix in di]
-    # plt.subplot(122)
-    # plot_degree_distr(degree, 'Degree distribution NetworkX')
-
-    # # Experimental results
-    # num_edges = G.number_of_edges()
-    # print('The number of edges is: ' + str(num_edges))
-    # # Theoretical results
-    # print('The expected number of edges is: ' + str(p * N * (N - 1) / 2))
-    # error = ((abs(num_edges - (p * N * (N - 1) / 2))) * 100) / (p * N * (N - 1) / 2)
-    # print('The relative error over 100 is: ' + str(error))
 
 
 # ----------------------------------------------------------------------------------- Watts-Strogatz “small-world” model
@@ -123,19 +92,11 @@ elif type == 2:
     plt.subplot(122)
     plt.bar(axix, axiy, width=0.60, color='g')
     plt.title('Ground Truth Degree distribution')
-    plt.xlabel('Degree')
-    plt.ylabel('Probability')
+    plt.xlabel('Degree k')
+    plt.ylabel('Fraction of vertices Pk having degree k')
     plt.ylim((0,extra))
     plt.suptitle('Watts-Strogatz graph model (N='+str(N)+',k='+str(K)+',p='+str(beta)+')',fontsize=16)
     plt.show()
-
-    # # Plot degree distribution networkX
-    # G2 = nx.watts_strogatz_graph(N, K, beta)
-    # di = list(G2.degree)
-    # degree = [dix[1] for dix in di]
-    # plt.subplot(132)
-    # plot_degree_distr(degree, 'Degree distribution NetworkX')
-    # plt.show()
 
     # # Plot the graph
     # pos = dict()
@@ -147,19 +108,11 @@ elif type == 2:
     # plt.draw()
     # plt.show()
 
-    # # Plot degree distribution networkX
-    # G2 = nx.watts_strogatz_graph(N, K, beta)
-    # di = list(G2.degree)
-    # degree = [dix[1] for dix in di]
-    # plt.subplot(122)
-    # plot_degree_distr(degree, 'Degree distribution NetworkX')
-    # plt.show()
-
 # --------------------------------------------------------------------------------------- Barabási-Albert algorithm (BA)
 elif type == 3:
-    N = 50
+    N = 1000
     Nini = 10
-    m = 4
+    m = 4  # m defines the average degree
     G = nx.Graph()
     scala = np.linspace(0, Nini - 1, Nini)
     G.add_nodes_from(scala)
@@ -184,6 +137,34 @@ elif type == 3:
                 connected_nodes = connected_nodes + [nodev,]
                 G.add_edge(nodev, i)
 
+    # Plot degree distribution Linear Scale
+    di = list(G.degree)
+    degree = [dix[1] for dix in di]
+    plt.subplot(131)
+    extra = plot_degree_distr(degree, 'Experimental Degree distribution')
+    # Ground truth Linear Scale
+    int_min = min(degree)
+    int_max = max(degree)
+    axix = np.linspace(int_min, int_max, int(int_max - int_min + 1))
+    axiy = [2*m*(m+1)/(item*(item+1)*(item+2)) for item in axix]
+    plt.subplot(133)
+    plt.bar(axix, axiy, width=0.80, color='g')
+    plt.title('Ground Truth Degree distribution')
+    plt.xlabel('Degree k')
+    plt.ylabel('Fraction of vertices Pk having degree k')
+    plt.ylim((0, extra))
+    plt.suptitle('Barabási-Albert graph model (N=' + str(N) + ',m=' + str(m) + ')', fontsize=16)
+    # Right Logaritmic degree distribution
+    degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
+    plt.subplot(132)
+    a,b,anch = ploting_logscale(degree_sequence)
+    plt.bar(a, b, width=anch, align='edge', edgecolor="black", color='b', lw=2)
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.xlabel('Degree k')
+    plt.title('Experimental Degree distribution (log-scale)')
+    plt.show()
+
 
 # --------------------------------------------------------------------------------------------- Configuration Model (CM)
 elif type == 4:
@@ -199,7 +180,7 @@ elif type == 4:
     if pois == 0:
         lambd = 5
         degree = np.random.poisson(lambd, N)
-    # Powe Law Distribution
+    # Power Law Distribution
     elif pois == 1:
         mini = 1
         maxi = N-1
@@ -234,3 +215,24 @@ elif type == 4:
                     degreeacum = degreeacum + [degreeacum[itx] + degree[itx], ]
                 sumatotal_degree = degreeacum[-1]
             tries = tries + 1
+
+    # Plot degree distribution Linear Scale
+    di = list(G.degree)
+    degree = [dix[1] for dix in di]
+    plt.subplot(121)
+    extra = plot_degree_distr(degree, 'Experimental Degree distribution')
+    if pois == 0:
+        distri = 'Poisson'
+    else:
+        distri = 'Power-Law'
+    plt.suptitle('Configuration Model (CM) (N=' + str(N) + ',Distribution=' + distri + ')', fontsize=16)
+    # Right Logaritmic degree distribution
+    degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
+    plt.subplot(122)
+    a,b,anch = ploting_logscale(degree_sequence)
+    plt.bar(a, b, width=anch, align='edge', edgecolor="black", color='b', lw=2)
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.xlabel('Degree k')
+    plt.title('Experimental Degree distribution (log-scale)')
+    plt.show()
