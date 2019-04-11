@@ -22,7 +22,8 @@ def plot_degree_distr(d,title):
     return extra
     #plt.show()
 
-type = 1 # Type of graph I want to create
+
+type = 2 # Type of graph I want to create
 
 # --------------------------------------------------------------------------------------- Erdös-Rényi random graph model
 if type == 1:
@@ -65,8 +66,8 @@ if type == 1:
     # G2 = nx.erdos_renyi_graph(N, p, seed=None, directed=False)
     # di = list(G2.degree)
     # degree = [dix[1] for dix in di]
-    # plt.subplot(132)
-    # plot_degree_distr(degree, 'Degree distribution NetworkX (N=' + str(N) + ',p=' + str(p) + ')')
+    # plt.subplot(122)
+    # plot_degree_distr(degree, 'Degree distribution NetworkX')
 
     # # Experimental results
     # num_edges = G.number_of_edges()
@@ -80,9 +81,9 @@ if type == 1:
 # ----------------------------------------------------------------------------------- Watts-Strogatz “small-world” model
 # There is an error on the algorithm explained in wikipedia
 elif type == 2:
-    N = 50
-    K = 4
-    beta = 0.5
+    N = 1000
+    K = 8
+    beta = 0.2
     G = nx.Graph()
     scala = np.linspace(0, N - 1, N)
     G.add_nodes_from(scala)
@@ -102,16 +103,57 @@ elif type == 2:
                 nk = randint(0, len(possible_connection))
                 G.add_edge(ni, nk)
 
-    pos = dict()
-    degree = 0
-    for i in range(0, N):
-        pos[i] = np.array([math.cos(degree * (math.pi / 180)), math.sin(degree * (math.pi / 180))])
-        degree = degree + 360 / N
+    # Plot degree distribution
+    di = list(G.degree)
+    degree = [dix[1] for dix in di]
+    plt.subplot(121)
+    extra = plot_degree_distr(degree,'Experimental Degree distribution')
 
-    nx.draw(G, with_labels=True, pos=pos, node_size=100)
-    plt.draw()
+    # Ground truth
+    int_min = min(degree)
+    int_max = max(degree)
+    axix = np.linspace(int_min, int_max, int(int_max - int_min + 1))
+    axiy = []
+    for item in axix:
+        suma = 0
+        for it in range(0,(int(min((item-K/2),(K/2)))+1)):
+            suma = suma + ((comb(K/2, it)*((1-beta)**(it))*(beta**((K/2)-it))*((beta*(K/2))**(item-(K/2)-it))*(np.exp(
+                -beta*K/2)))/(math.factorial(item-(K/2)-it)))
+        axiy = axiy + [suma,]
+    plt.subplot(122)
+    plt.bar(axix, axiy, width=0.60, color='g')
+    plt.title('Ground Truth Degree distribution')
+    plt.xlabel('Degree')
+    plt.ylabel('Probability')
+    plt.ylim((0,extra))
+    plt.suptitle('Watts-Strogatz graph model (N='+str(N)+',k='+str(K)+',p='+str(beta)+')',fontsize=16)
     plt.show()
 
+    # # Plot degree distribution networkX
+    # G2 = nx.watts_strogatz_graph(N, K, beta)
+    # di = list(G2.degree)
+    # degree = [dix[1] for dix in di]
+    # plt.subplot(132)
+    # plot_degree_distr(degree, 'Degree distribution NetworkX')
+    # plt.show()
+
+    # # Plot the graph
+    # pos = dict()
+    # degree = 0
+    # for i in range(0, N):
+    #     pos[i] = np.array([math.cos(degree * (math.pi / 180)), math.sin(degree * (math.pi / 180))])
+    #     degree = degree + 360 / N
+    # nx.draw(G, with_labels=True, pos=pos, node_size=100)
+    # plt.draw()
+    # plt.show()
+
+    # # Plot degree distribution networkX
+    # G2 = nx.watts_strogatz_graph(N, K, beta)
+    # di = list(G2.degree)
+    # degree = [dix[1] for dix in di]
+    # plt.subplot(122)
+    # plot_degree_distr(degree, 'Degree distribution NetworkX')
+    # plt.show()
 
 # --------------------------------------------------------------------------------------- Barabási-Albert algorithm (BA)
 elif type == 3:
