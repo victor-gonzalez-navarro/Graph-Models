@@ -24,22 +24,24 @@ if type == 1:
     # Plot degree distribution
     di = list(G.degree)
     degree = [dix[1] for dix in di]
-    plt.subplot(121)
+    fig = plt.figure(figsize=(13, 5))
+    ax = plt.subplot(121)
     extra = plot_degree_distr(degree,'Experimental Degree distribution')
-
     # Ground truth
     int_min = min(degree)
     int_max = max(degree)
     axix = np.linspace(int_min, int_max, int(int_max - int_min + 1))
     axiy = [comb(N - 1, item) * (p ** item) * ((1 - p) ** (N - 1 - item)) for item in axix]
-    plt.subplot(122)
-    plt.bar(axix, axiy, width=0.80, color='g')
+    ax = plt.subplot(122)
+    ax.bar(axix, axiy, width=0.80, color='g')
     plt.title('Ground Truth Degree distribution')
     plt.xlabel('Degree')
     plt.ylabel('Probability')
     plt.ylim((0,extra))
-    plt.suptitle('Erdös-Rényi random graph model (N='+str(N)+',p='+str(p)+')',fontsize=16)
-    plt.show()
+    sstr = 'Erdös-Rényi random graph model (N='+str(N)+',p='+str(p)+')'
+    plt.suptitle(sstr,fontsize=16)
+    #plt.show()
+    fig.savefig('./ImagesType1/'+sstr+'.png')
 
     # # Plot the graph
     # nx.draw(G, with_labels=False)
@@ -75,9 +77,9 @@ elif type == 2:
     # Plot degree distribution
     di = list(G.degree)
     degree = [dix[1] for dix in di]
-    plt.subplot(121)
+    fig = plt.figure(figsize=(13, 5))
+    ax = plt.subplot(121)
     extra = plot_degree_distr(degree,'Experimental Degree distribution')
-
     # Ground truth
     int_min = min(degree)
     int_max = max(degree)
@@ -89,14 +91,16 @@ elif type == 2:
             suma = suma + ((comb(K/2, it)*((1-beta)**(it))*(beta**((K/2)-it))*((beta*(K/2))**(item-(K/2)-it))*(np.exp(
                 -beta*K/2)))/(math.factorial(item-(K/2)-it)))
         axiy = axiy + [suma,]
-    plt.subplot(122)
-    plt.bar(axix, axiy, width=0.60, color='g')
+    ax = plt.subplot(122)
+    ax.bar(axix, axiy, width=0.60, color='g')
     plt.title('Ground Truth Degree distribution')
     plt.xlabel('Degree k')
     plt.ylabel('Fraction of vertices Pk having degree k')
     plt.ylim((0,extra))
-    plt.suptitle('Watts-Strogatz graph model (N='+str(N)+',k='+str(K)+',p='+str(beta)+')',fontsize=16)
-    plt.show()
+    sstr = 'Watts-Strogatz graph model (N='+str(N)+',k='+str(K)+',p='+str(beta)+')'
+    plt.suptitle(sstr,fontsize=16)
+    #plt.show()
+    fig.savefig('./ImagesType2/'+sstr+'.png')
 
     # # Plot the graph
     # pos = dict()
@@ -140,30 +144,40 @@ elif type == 3:
     # Plot degree distribution Linear Scale
     di = list(G.degree)
     degree = [dix[1] for dix in di]
-    plt.subplot(131)
+    # Display Exponential
+    suma = 0
+    for item in degree:
+        suma = suma + math.log(item / (min(degree) - 0.5))
+    gamma_experimental = round(1 + N * (suma ** (-1)),3)
+    # Continue
+    fig = plt.figure(figsize=(20, 5))
+    ax = plt.subplot(131)
     extra = plot_degree_distr(degree, 'Experimental Degree distribution')
     # Ground truth Linear Scale
     int_min = min(degree)
     int_max = max(degree)
     axix = np.linspace(int_min, int_max, int(int_max - int_min + 1))
     axiy = [2*m*(m+1)/(item*(item+1)*(item+2)) for item in axix]
-    plt.subplot(133)
-    plt.bar(axix, axiy, width=0.80, color='g')
+    ax = plt.subplot(133)
+    ax.bar(axix, axiy, width=0.80, color='g')
     plt.title('Ground Truth Degree distribution')
     plt.xlabel('Degree k')
     plt.ylabel('Fraction of vertices Pk having degree k')
     plt.ylim((0, extra))
-    plt.suptitle('Barabási-Albert graph model (N=' + str(N) + ',m=' + str(m) + ')', fontsize=16)
+    sstr = 'Barabási-Albert graph model (N=' + str(N) + ',m=' + str(m) + ')'
+    plt.suptitle(sstr, fontsize=16)
     # Right Logaritmic degree distribution
     degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
-    plt.subplot(132)
+    ax = plt.subplot(132)
     a,b,anch = ploting_logscale(degree_sequence)
-    plt.bar(a, b, width=anch, align='edge', edgecolor="black", color='b', lw=2)
+    ax.bar(a, b, width=anch, align='edge', edgecolor="black", color='b', lw=2)
     plt.yscale('log')
     plt.xscale('log')
     plt.xlabel('Degree k')
     plt.title('Experimental Degree distribution (log-scale)')
-    plt.show()
+    sstr = sstr + '-expe=' + str(gamma_experimental)
+    fig.savefig('./ImagesType3/'+sstr+'.png')
+    #plt.show()
 
 
 # --------------------------------------------------------------------------------------------- Configuration Model (CM)
@@ -171,7 +185,7 @@ elif type == 4:
     pois = int(input('Do you want a Poisson or a Power Law degree distribution? Insert a number (0-POISS, '
                     '1-POWER LAW): '))
 
-    N = 50
+    N = 100
     G = nx.Graph()
     scala = np.linspace(0, N - 1, N)
     G.add_nodes_from(scala)
@@ -182,13 +196,18 @@ elif type == 4:
         degree = np.random.poisson(lambd, N)
     # Power Law Distribution
     elif pois == 1:
-        mini = 1
-        maxi = N-1
-        gamma = 2.2
-        g = 1-gamma # gamma = 1-g  -->g-1 = -gamma
-        r = np.random.random(N)
-        ag, bg = mini ** g, maxi ** g
-        degree = np.round((ag + (bg - ag) * r) ** (1. / g))
+        x = np.linspace(start=1, stop=5000, num=5000)
+        gamma = 3
+        C = 1000
+        y = C*(x**(-gamma))
+        degreeacum = [0]
+        for itx in range(len(y)):
+            degreeacum = degreeacum + [degreeacum[itx] + y[itx], ]
+        sumatotal_degree = degreeacum[-1]
+        degree = []
+        for nodeval in range(N):
+            value = random.uniform(0, 1) * sumatotal_degree
+            degree = degree + [np.digitize([value], degreeacum)[0], ]
 
     # Plot degree distribution
     plot_degree_distr(degree,'Degree distribution')
@@ -201,7 +220,7 @@ elif type == 4:
 
     for nodeval in range(N):
         tries = 0
-        while (degree[nodeval] != 0) and (tries <100):
+        while (degree[nodeval] != 0) and (tries <1000):
             value = random.uniform(0, 1)*sumatotal_degree
             rv = (np.digitize([value], degreeacum)[0])-1
             if (rv != nodeval) and (not(G.has_edge(rv, nodeval))):
@@ -219,20 +238,41 @@ elif type == 4:
     # Plot degree distribution Linear Scale
     di = list(G.degree)
     degree = [dix[1] for dix in di]
-    plt.subplot(121)
-    extra = plot_degree_distr(degree, 'Experimental Degree distribution')
+    # Display Exponential
+    if pois == 1:
+        suma = 0
+        for item in degree:
+            suma = suma + math.log(item / (min(degree) - 0.5))
+        gamma_experimental = round(1 + N * (suma ** (-1)), 3)
+    # Continue
+    fig = plt.figure(figsize=(13, 5))
+    ax = plt.subplot(121)
+    extra = plot_degree_distr(degree, 'Experimental Degree distribution (linear-scale)')
     if pois == 0:
         distri = 'Poisson'
+        sstr = 'Configuration Model (N=' + str(N) + ',Distribution=' + distri + ',lambda=' + str(lambd) + ')'
     else:
         distri = 'Power-Law'
-    plt.suptitle('Configuration Model (CM) (N=' + str(N) + ',Distribution=' + distri + ')', fontsize=16)
+        sstr = 'Configuration Model (N=' + str(N) + ',Distribution=' + distri + ',gamma=' + str(gamma) + ')'
+    plt.suptitle(sstr, fontsize=16)
     # Right Logaritmic degree distribution
     degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
-    plt.subplot(122)
+    ax = plt.subplot(122)
     a,b,anch = ploting_logscale(degree_sequence)
-    plt.bar(a, b, width=anch, align='edge', edgecolor="black", color='b', lw=2)
+    ax.bar(a, b, width=anch, align='edge', edgecolor="black", color='b', lw=2)
     plt.yscale('log')
     plt.xscale('log')
     plt.xlabel('Degree k')
+    plt.ylabel('Fraction of vertices Pk having degree k')
     plt.title('Experimental Degree distribution (log-scale)')
-    plt.show()
+    if pois == 1:
+        sstr = sstr + '-expe='+str(gamma_experimental)
+    fig.savefig('./ImagesType4/'+sstr+'.png')
+
+# ------------------------------------------------------------------------------------------------------- Plot the graph
+if N<200:
+    fig = plt.figure()
+    nx.draw(G, with_labels=False, node_size=25)
+    fig.savefig('./ImagesType'+str(type)+'/'+sstr+'Graph'+'.png')
+
+
